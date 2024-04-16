@@ -4,7 +4,7 @@ Social media tracker that tracks the posts on Facebook, Instagram, and LinkedIn.
 
 #steps to work on the project 
 
-# step 1 
+#step 1 
 1. fork the project to your GitHub ==> https://docs.github.com/en/get-started/quickstart/fork-a-repo
 
 #step 2 
