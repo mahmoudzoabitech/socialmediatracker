@@ -3,14 +3,19 @@ package com.tsofnsalesforce.LoginandRegistration.Repository;
 import com.tsofnsalesforce.LoginandRegistration.model.Token;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface TokenRepository extends JpaRepository<Token,Integer> {
 
-    @Query(value = "select t from Token t inner join User u on t.user.id = u.id\n" +
-                   "where u.id= :userId and (t.expired = false or t.revoked = false)")
+    @Query(value = """
+      select t from token t inner join appUser u\s
+      on t.appUser.id = u.id\s
+      where u.id = :userId and (t.expired = false or t.revoked = false)\s
+      """)
     List<Token> findAllValidTokenByUser(Integer userId);
 
     

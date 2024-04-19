@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,13 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY = "9c99904df17a54e487b44d8722424784b13a0e46c6b38723b5afb3b722c2024c";
+    @Value("${application.security.jwt.secret-key}")
+    private String secretKey;
+    @Value("${application.security.jwt.expiration}")
+    private Long jwtExpiration;
+    @Value("${application.security.jwt.refresh-token.expiration}")
+    private Long jwtRefreshExpiration;
+
 
     public String extractUsername(String token) {
         return extractClaim(token,Claims::getSubject);
@@ -32,6 +39,20 @@ public class JwtService {
             UserDetails userDetails
     )
     {
+        return buildToken(extractClaims,userDetails,jwtExpiration);
+    }
+
+    public String generateRefreshToken(UserDetails userDetails)
+    {
+        return buildToken(new HashMap<>(),userDetails,jwtRefreshExpiration);
+    }
+
+    private String buildToken(
+            Map<String,Object> extractClaims,
+            UserDetails userDetails,
+            long jwtExpiration
+    )
+    {
         return  Jwts
                 .builder()
                 .setClaims(extractClaims)
@@ -41,7 +62,6 @@ public class JwtService {
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
-
     public <T> T extractClaim(String token, Function<Claims,T> claimsResolver){
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -72,7 +92,7 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Base64.getDecoder().decode(SECRET_KEY);
+        byte[] keyBytes = Base64.getDecoder().decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

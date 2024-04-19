@@ -1,5 +1,6 @@
 package com.tsofnsalesforce.LoginandRegistration.config;
 
+import com.tsofnsalesforce.LoginandRegistration.Repository.TokenRepository;
 import com.tsofnsalesforce.LoginandRegistration.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,6 +23,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final TokenRepository tokenRepository;
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -39,8 +42,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             email = jwtService.extractUsername(jwt);
             if(email != null && SecurityContextHolder.getContext().getAuthentication() == null){
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
-                if(jwtService.isTokenValid(jwt,userDetails)){
+                var isTokenValid = tokenRepository.findByToken(jwt)
+                        .map(t -> !t.isExpired() && !t.isRevoked())
+                        .orElse(false);
+                if(jwtService.isTokenValid(jwt,userDetails) && isTokenValid){
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
                             null,
                             userDetails.getAuthorities()
                     );
