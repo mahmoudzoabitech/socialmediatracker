@@ -1,52 +1,44 @@
 package com.tsofnsalesforce.LoginandRegistration.model;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.tsofnsalesforce.LoginandRegistration.controller.AuthenticationController;
+import jakarta.persistence.Column;
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 
-import java.util.Collections;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static com.tsofnsalesforce.LoginandRegistration.model.Permission.*;
 
 @Getter
-@RequiredArgsConstructor
-public enum Role {
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "role")
+@EntityListeners(AuthenticationController.class)
+public class Role {
 
-    USER(Collections.emptySet()),
-    ADMIN(
-            Set.of(
-                    ADMIN_READ,
-                    ADMIN_UPDATE,
-                    ADMIN_DELETE,
-                    ADMIN_CREATE,
-                    MANAGER_READ,
-                    MANAGER_UPDATE,
-                    MANAGER_DELETE,
-                    MANAGER_CREATE
-            )
-    ),
-    MANAGER(
-            Set.of(
-                    MANAGER_READ,
-                    MANAGER_UPDATE,
-                    MANAGER_DELETE,
-                    MANAGER_CREATE
-            )
-    )
+    @Id
+    @GeneratedValue
+    private Integer id;
 
-    ;
+    @Column(unique = true)
+    private String name;
 
-    private final Set<Permission> permissions;
+    @ManyToMany(mappedBy = "roles")
+    @JsonIgnore
+    private List<AppUser> appUsers;
 
-    public List<SimpleGrantedAuthority> getAuthorities() {
-        var authorities = getPermissions()
-                .stream()
-                .map(permission -> new SimpleGrantedAuthority(permission.getPermission()))
-                .collect(Collectors.toList());
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + this.name()));
-        return authorities;
-    }
+    @CreatedDate
+    @Column(nullable = false,updatable = false)
+    private LocalDateTime createdDate;
+
+    @LastModifiedBy
+    @Column(insertable = false)
+    private LocalDateTime lastModifiedDate;
+
+
 }

@@ -14,6 +14,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -28,6 +30,10 @@ public class Token {
     @Column(unique = true)
     private String token;
 
+    private LocalDateTime cratedAt;
+    private LocalDateTime expiresAt;
+    private LocalDateTime validatedAt;
+
     @Enumerated(EnumType.STRING)
     private TokenType tokenType = TokenType.BEARER;
 
@@ -36,6 +42,6 @@ public class Token {
     private boolean expired;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id",nullable = false)
     private AppUser appUser;
 }

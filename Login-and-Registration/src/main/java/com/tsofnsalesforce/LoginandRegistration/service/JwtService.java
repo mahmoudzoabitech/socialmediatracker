@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ public class JwtService {
 
 
     public String extractUsername(String token) {
+
         return extractClaim(token,Claims::getSubject);
     }
 
@@ -47,21 +49,6 @@ public class JwtService {
         return buildToken(new HashMap<>(),userDetails,jwtRefreshExpiration);
     }
 
-    private String buildToken(
-            Map<String,Object> extractClaims,
-            UserDetails userDetails,
-            long jwtExpiration
-    )
-    {
-        return  Jwts
-                .builder()
-                .setClaims(extractClaims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
     public <T> T extractClaim(String token, Function<Claims,T> claimsResolver){
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -72,6 +59,29 @@ public class JwtService {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
+
+    private String buildToken(
+            Map<String,Object> extractClaims,
+            UserDetails userDetails,
+            long jwtExpiration
+    )
+    {
+        var authorities = userDetails.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        return  Jwts
+                .builder()
+                .setClaims(extractClaims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24))
+                .claim("authorities" , authorities)
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());

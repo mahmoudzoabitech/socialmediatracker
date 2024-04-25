@@ -5,11 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -17,7 +24,8 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "user")
-public class AppUser implements UserDetails {
+@EntityListeners(AuditingEntityListener.class)
+public class AppUser implements UserDetails, Principal {
 
     @Id
     @GeneratedValue
@@ -26,21 +34,35 @@ public class AppUser implements UserDetails {
     private String lastName;
     @Column(unique = true)
     private String email;
-    private String Password;
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    private String password;
+    private boolean accountLocked;
+    private boolean enabled;
+
+    @CreatedDate
+    @Column(nullable = false,updatable = false)
+    private LocalDateTime createdDate;
+
+    @LastModifiedDate
+    @Column(insertable = false)
+    private LocalDateTime lastModifiedTime;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    private List<Role> roles;
 
     @OneToMany(mappedBy = "appUser")
     private List<Token> tokens;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return role.getAuthorities();
+        return this.roles
+                .stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
     }
 
     @Override
     public String getPassword() {
-        return Password;
+        return password;
     }
 
     @Override
@@ -55,7 +77,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !accountLocked;
     }
 
     @Override
@@ -65,6 +87,11 @@ public class AppUser implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
+    }
+
+    @Override
+    public String getName() {
+        return email;
     }
 }
