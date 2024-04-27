@@ -26,7 +26,7 @@ public class LoginAndRegistrationApplication {
 		return args -> {
 			if(roleRepository.findAll().isEmpty()) {
 				roleRepository.save(
-						Role.builder().createdDate(LocalDateTime.now()).name("USER").build()
+						Role.builder().createdDate(LocalDateTime.now()).name("READ").build()
 				);
 				roleRepository.save(
 						Role.builder().createdDate(LocalDateTime.now()).name("ADMIN").build()
@@ -36,6 +36,12 @@ public class LoginAndRegistrationApplication {
 				);
 				roleRepository.save(
 						Role.builder().createdDate(LocalDateTime.now()).name("DELETE_ACTION").build()
+				);
+				roleRepository.save(
+						Role.builder().createdDate(LocalDateTime.now()).name("UPDATE_ACTION").build()
+				);
+				roleRepository.save(
+						Role.builder().createdDate(LocalDateTime.now()).name("TRIGGER_MANUAL_SCAN").build()
 				);
 			}
 		};

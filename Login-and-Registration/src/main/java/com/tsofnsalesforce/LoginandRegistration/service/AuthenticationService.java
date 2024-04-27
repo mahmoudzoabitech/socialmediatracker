@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 
 import static com.tsofnsalesforce.LoginandRegistration.enums.EmailTemplate.ACTIVATE_ACCOUNT;
 
@@ -44,10 +45,10 @@ public class AuthenticationService {
 
 
     public AuthenticationResponse register(RegisterRequest request) throws MessagingException {
-        var userRole = roleRepository.findByName("USER")
+        var userRole = roleRepository.findByName("READ")
                 // TODO - make the exception more
                 .orElseThrow(()-> new IllegalArgumentException("ROLE USER IS NOT FOUND!"));
-
+        System.out.println(userRole.getName());
         var user = AppUser.builder()
                 .firstName(request.getFirstname())
                 .lastName(request.getLastname())
@@ -55,8 +56,7 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .accountLocked(false)
                 .enabled(false)
-//                .roles(List.of(userRole))
-                .roles(request.getUser_role())
+                .roles(List.of(userRole))
                 .build();
         var savedUser = userRepository.save(user);
         sendValidationEmail(user);
@@ -91,6 +91,7 @@ public class AuthenticationService {
                 .refreshToken(refreshToken)
                 .build();
     }
+
 //    @Transactional
     public void activateAccount(String token) throws MessagingException {
         var userToken = tokenRepository.findByToken(token)

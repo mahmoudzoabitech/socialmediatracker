@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface TokenRepository extends JpaRepository<Token,Integer> {
 
     @Query(value = """
-      select t from token t inner join appUser u\s
+      select t from tokens t inner join appUser u\s
       on t.appUser.id = u.id\s
       where u.id = :userId and (t.expired = false or t.revoked = false)\s
       """)

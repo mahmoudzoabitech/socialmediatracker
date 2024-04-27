@@ -2,13 +2,13 @@ package com.tsofnsalesforce.LoginandRegistration.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tsofnsalesforce.LoginandRegistration.controller.AuthenticationController;
-import jakarta.persistence.Column;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -17,12 +17,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "role")
+@Table(name = "roles")
 @EntityListeners(AuthenticationController.class)
 public class Role {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(unique = true)
@@ -30,7 +30,7 @@ public class Role {
 
     @ManyToMany(mappedBy = "roles")
     @JsonIgnore
-    private List<AppUser> appUsers;
+    private List<AppUser> appUsers = new ArrayList<>();
 
     @CreatedDate
     @Column(nullable = false,updatable = false)
