@@ -54,6 +54,11 @@ public class AppUser implements UserDetails, Principal {
     @OneToMany(mappedBy = "appUser")
     private List<Token> tokens;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id",nullable = false)
+    private Account account;
+
+
     @Override
     public Collection<GrantedAuthority> getAuthorities() {
         return this.roles

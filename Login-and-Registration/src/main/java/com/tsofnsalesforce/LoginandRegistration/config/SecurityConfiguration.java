@@ -23,21 +23,40 @@ public class SecurityConfiguration {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//
+//        http
+//                .cors(withDefaults())
+//                .csrf(AbstractHttpConfigurer::disable)
+//                .authorizeHttpRequests(request -> {
+//                    request.requestMatchers("/api/v1/authenticate/**").permitAll();
+//                    request.requestMatchers("/api/v1/auth/**").hasRole("ADMIN");
+//                    request.anyRequest().authenticated();
+//                        })
+//                .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
+//                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+//                .authenticationProvider(authenticationProvider)
+//                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+//        return  http.build();
+//    }
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
-                .cors(withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(request -> request.requestMatchers(
-                        "/api/v1/auth/**"
-                                ,
-                                "/api/v1/admin/**"
-                        )
-                        .permitAll().anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-        return  http.build();
-    }
+    http
+            .cors(withDefaults())
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(request -> {
+                request.requestMatchers("/api/v1/authenticate/**",
+                                                    "/api/v1/auth/**")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated();
+            })
+//            .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+            .authenticationProvider(authenticationProvider)
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+    return  http.build();
+}
 }

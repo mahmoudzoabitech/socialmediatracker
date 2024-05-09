@@ -1,7 +1,8 @@
 package com.tsofnsalesforce.LoginandRegistration.controller;
 
-import com.tsofnsalesforce.LoginandRegistration.Response.AuthenticationResponse;
-import com.tsofnsalesforce.LoginandRegistration.request.AuthenticationRequest;
+import com.tsofnsalesforce.LoginandRegistration.request.AddAccountRequest;
+import com.tsofnsalesforce.LoginandRegistration.request.AddPermissionRequest;
+import com.tsofnsalesforce.LoginandRegistration.request.DeletePermissionRequest;
 import com.tsofnsalesforce.LoginandRegistration.request.RegisterRequest;
 import com.tsofnsalesforce.LoginandRegistration.service.AuthenticationService;
 import jakarta.mail.MessagingException;
@@ -29,15 +30,27 @@ public class AuthenticationController {
         return ResponseEntity.accepted().build();
     }
 
-    @PostMapping("/authenticate")
-    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request){
-        return ResponseEntity.ok(authenticationService.authenticate(request));
+    @PostMapping("/add-account")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ResponseEntity<?> addAccount(@RequestBody @Valid AddAccountRequest request){
+        authenticationService.addAccount(request);
+        return ResponseEntity.accepted().build();
     }
 
-    @GetMapping("/activate-account")
-    public void activateAccount(@RequestParam String token) throws MessagingException {
-        authenticationService.activateAccount(token);
+    @PostMapping("/add-permission")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ResponseEntity<?> updatePermission(@RequestBody @Valid AddPermissionRequest request) throws MessagingException {
+        authenticationService.AddPermission(request);
+        return ResponseEntity.accepted().build();
     }
+
+    @PostMapping("/delete-permission")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ResponseEntity<?> deletePermission(@RequestBody @Valid DeletePermissionRequest request) throws MessagingException {
+        authenticationService.deletePermission(request);
+        return ResponseEntity.accepted().build();
+    }
+
     @PostMapping("/refresh-token")
     public void refreshToken(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException {
         authenticationService.refreshToken(httpServletRequest,httpServletResponse);

@@ -23,6 +23,9 @@ public class RegisterRequest {
     @NotEmpty(message = "Email Can't be empty!")
     @NotBlank(message = "Email Can't be empty!")
     private String email;
+    @NotEmpty(message = "Account name can't be empty!")
+    @NotBlank(message = "Account name be empty!")
+    private String accountName;
     @NotEmpty(message = "Password Can't be empty!")
     @NotBlank(message = "Password Can't be empty!")
     @Size(min = 8,message = "Password should be 8 or more character!")

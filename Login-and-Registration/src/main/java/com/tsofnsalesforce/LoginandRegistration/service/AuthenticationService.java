@@ -1,15 +1,15 @@
 package com.tsofnsalesforce.LoginandRegistration.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tsofnsalesforce.LoginandRegistration.Repository.AccountRepository;
 import com.tsofnsalesforce.LoginandRegistration.Repository.RoleRepository;
 import com.tsofnsalesforce.LoginandRegistration.Repository.TokenRepository;
 import com.tsofnsalesforce.LoginandRegistration.Repository.UserRepository;
+import com.tsofnsalesforce.LoginandRegistration.Response.AddPermissionResponse;
 import com.tsofnsalesforce.LoginandRegistration.Response.AuthenticationResponse;
-import com.tsofnsalesforce.LoginandRegistration.model.AppUser;
-import com.tsofnsalesforce.LoginandRegistration.model.Token;
-import com.tsofnsalesforce.LoginandRegistration.model.TokenType;
-import com.tsofnsalesforce.LoginandRegistration.request.AuthenticationRequest;
-import com.tsofnsalesforce.LoginandRegistration.request.RegisterRequest;
+import com.tsofnsalesforce.LoginandRegistration.Response.DeletePermissionResponse;
+import com.tsofnsalesforce.LoginandRegistration.model.*;
+import com.tsofnsalesforce.LoginandRegistration.request.*;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,8 +24,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static com.tsofnsalesforce.LoginandRegistration.enums.EmailTemplate.ACTIVATE_ACCOUNT;
 
@@ -39,16 +38,21 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final RoleRepository roleRepository;
     private final EmailService emailService;
+    private final AccountRepository accountRepository;
 
     @Value("${application.mailing.frontend.activation-url}")
     private String activationUrl;
 
 
     public AuthenticationResponse register(RegisterRequest request) throws MessagingException {
+
+        Account account = accountRepository.findAccountByName(request.getAccountName()).orElseThrow(() -> new IllegalArgumentException("account not present"));
+        if(request.getAccountName().isEmpty())
+            throw new MessagingException("Please specify the account name");
+
         var userRole = roleRepository.findByName("READ")
                 // TODO - make the exception more
                 .orElseThrow(()-> new IllegalArgumentException("ROLE USER IS NOT FOUND!"));
-        System.out.println(userRole.getName());
         var user = AppUser.builder()
                 .firstName(request.getFirstname())
                 .lastName(request.getLastname())
@@ -57,10 +61,10 @@ public class AuthenticationService {
                 .accountLocked(false)
                 .enabled(false)
                 .roles(List.of(userRole))
+                .account(account)
                 .build();
         var savedUser = userRepository.save(user);
         sendValidationEmail(user);
-
 
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
@@ -92,6 +96,12 @@ public class AuthenticationService {
                 .build();
     }
 
+    public void addAccount(AddAccountRequest request) {
+        var account = Account.builder()
+                .name(request.getAccountName())
+                .build();
+        accountRepository.save(account);
+    }
 //    @Transactional
     public void activateAccount(String token) throws MessagingException {
         var userToken = tokenRepository.findByToken(token)
@@ -107,6 +117,55 @@ public class AuthenticationService {
         userToken.setValidatedAt(LocalDateTime.now());
         tokenRepository.save(userToken);
     }
+    //-------------------------------------------------------//
+    public AddPermissionResponse AddPermission(AddPermissionRequest request) throws MessagingException {
+
+        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        List<Role>  addedRoles = new ArrayList<>();
+        var userRoles = user.getRoles();
+        for(int i=0;i<request.getRoles().size();i++){
+            var role = roleRepository.findByName(request.getRoles().get(i).getName()).orElseThrow(()-> new IllegalArgumentException("THE ROLE DOESN'T EXISTS"));
+            if(addedRoles.contains(role))
+                throw new MessagingException("THE USER ALREADY HAVE THE ROLE");
+            addedRoles.add(role);
+        }
+        userRoles.addAll(addedRoles);
+        user.setRoles(userRoles);
+        userRepository.save(user);
+
+        var jwtToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
+        saveUserToken(user, jwtToken);
+        return AddPermissionResponse.builder()
+                .token(jwtToken)
+                .accessToken(jwtToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    public DeletePermissionResponse deletePermission(DeletePermissionRequest request) throws MessagingException {
+
+        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        List<Role>  deleteRoles = new ArrayList<>();
+        var userRoles = user.getRoles();
+        for(int i=0;i<request.getRoles().size();i++){
+            var role = roleRepository.findByName(request.getRoles().get(i).getName()).orElseThrow(()-> new IllegalArgumentException("THE ROLE DOESN'T EXISTS"));
+            deleteRoles.add(role);
+        }
+        userRoles.removeAll(deleteRoles);
+        user.setRoles(userRoles);
+        userRepository.save(user);
+
+        var jwtToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
+        saveUserToken(user, jwtToken);
+        return DeletePermissionResponse.builder()
+                .token(jwtToken)
+                .accessToken(jwtToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+    //---------------------------------------------------------------------------------//
 
     private void sendValidationEmail(AppUser user) throws MessagingException {
         var newToken = generateAndSaveActivationToken(user);
@@ -193,5 +252,35 @@ public class AuthenticationService {
         }
     }
 
+    public boolean validateToken(String token) {
+        if (token == null ||!token.startsWith("Bearer ")) {
+            return false;
+        }
+        final String userEmail;
+        var extractedToken = token.substring(7);
+        userEmail = jwtService.extractUsername(extractedToken);
+        if (userEmail != null) {
+            var user = this.userRepository.findByEmail(userEmail)
+                    .orElseThrow();
+            return jwtService.isTokenValid(extractedToken, user);
+        }
+        return false;
+   }
 
+    public List<String> getUserRoles(String token) {
+        if (token == null ||!token.startsWith("Bearer ")) {
+            return Collections.emptyList();
+        }
+        if(validateToken(token)){
+            final String userEmail;
+            var extractedToken = token.substring(7);
+            userEmail = jwtService.extractUsername(extractedToken);
+            if (userEmail != null) {
+                var user = this.userRepository.findByEmail(userEmail)
+                        .orElseThrow();
+                return Collections.singletonList(String.valueOf(user.getRoles()));
+            }
+        }
+        return Collections.emptyList();
+    }
 }
