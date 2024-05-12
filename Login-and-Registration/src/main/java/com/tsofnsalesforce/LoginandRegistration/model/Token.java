@@ -19,7 +19,7 @@ public class Token {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(unique = true)
+    @Column(unique = true,length = 5000)
     private String token;
 
     private LocalDateTime cratedAt;

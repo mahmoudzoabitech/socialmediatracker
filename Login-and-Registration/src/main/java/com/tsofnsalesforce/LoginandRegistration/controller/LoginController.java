@@ -34,7 +34,8 @@ public class LoginController {
         return authenticationService.validateToken(token);
     }
 
-    public List<String> getUserRoles(String token) {
-        return authenticationService.getUserRoles("Bearer " + token);
+    @GetMapping("/user-roles")
+    public List<String> getUserRoles(@RequestHeader("Authorization") String token) {
+        return authenticationService.getUserRoles(token);
     }
 }

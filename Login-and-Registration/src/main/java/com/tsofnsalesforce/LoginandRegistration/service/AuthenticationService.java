@@ -53,6 +53,7 @@ public class AuthenticationService {
         var userRole = roleRepository.findByName("READ")
                 // TODO - make the exception more
                 .orElseThrow(()-> new IllegalArgumentException("ROLE USER IS NOT FOUND!"));
+
         var user = AppUser.builder()
                 .firstName(request.getFirstname())
                 .lastName(request.getLastname())
@@ -119,6 +120,12 @@ public class AuthenticationService {
     }
     //-------------------------------------------------------//
     public AddPermissionResponse AddPermission(AddPermissionRequest request) throws MessagingException {
+
+//        var checkAdminRole = roleRepository.findByName("ADMIN")
+//                .orElseThrow(() -> new IllegalArgumentException(""));
+//
+//        if(request.getRoles().contains(checkAdminRole))
+//            throw  new MessagingException("can't add more then one admin in the software");
 
         var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
         List<Role>  addedRoles = new ArrayList<>();
@@ -268,6 +275,7 @@ public class AuthenticationService {
    }
 
     public List<String> getUserRoles(String token) {
+        List<String> roles = new ArrayList<>();
         if (token == null ||!token.startsWith("Bearer ")) {
             return Collections.emptyList();
         }
@@ -278,7 +286,10 @@ public class AuthenticationService {
             if (userEmail != null) {
                 var user = this.userRepository.findByEmail(userEmail)
                         .orElseThrow();
-                return Collections.singletonList(String.valueOf(user.getRoles()));
+                for(int i=0;i<user.getRoles().size();i++){
+                    roles.add(user.getRoles().get(i).getName());
+                }
+                return roles;
             }
         }
         return Collections.emptyList();

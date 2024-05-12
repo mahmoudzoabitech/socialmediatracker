@@ -27,7 +27,7 @@ public class SecurityConfiguration {
 //    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 //
 //        http
-//                .cors(withDefaults())
+////                .cors(withDefaults())
 //                .csrf(AbstractHttpConfigurer::disable)
 //                .authorizeHttpRequests(request -> {
 //                    request.requestMatchers("/api/v1/authenticate/**").permitAll();
@@ -40,6 +40,7 @@ public class SecurityConfiguration {
 //                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 //        return  http.build();
 //    }
+
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
