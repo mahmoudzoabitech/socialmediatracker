@@ -121,18 +121,13 @@ public class AuthenticationService {
     //-------------------------------------------------------//
     public AddPermissionResponse AddPermission(AddPermissionRequest request) throws MessagingException {
 
-//        var checkAdminRole = roleRepository.findByName("ADMIN")
-//                .orElseThrow(() -> new IllegalArgumentException(""));
-//
-//        if(request.getRoles().contains(checkAdminRole))
-//            throw  new MessagingException("can't add more then one admin in the software");
 
-        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        var user = userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new IllegalArgumentException("User Doesn't exists!!"));
         List<Role>  addedRoles = new ArrayList<>();
-        var userRoles = user.getRoles();
+        var userRoles = user.getRoles(); 
         for(int i=0;i<request.getRoles().size();i++){
             var role = roleRepository.findByName(request.getRoles().get(i).getName()).orElseThrow(()-> new IllegalArgumentException("THE ROLE DOESN'T EXISTS"));
-            if(addedRoles.contains(role))
+            if(addedRoles.contains(role.getName()))
                 throw new MessagingException("THE USER ALREADY HAVE THE ROLE");
             addedRoles.add(role);
         }
@@ -153,14 +148,17 @@ public class AuthenticationService {
     public DeletePermissionResponse deletePermission(DeletePermissionRequest request) throws MessagingException {
 
         var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        System.out.println("user Roles before delete: " + user.getAuthorities());
         List<Role>  deleteRoles = new ArrayList<>();
         var userRoles = user.getRoles();
+        System.out.println("user roles"+ userRoles);
         for(int i=0;i<request.getRoles().size();i++){
             var role = roleRepository.findByName(request.getRoles().get(i).getName()).orElseThrow(()-> new IllegalArgumentException("THE ROLE DOESN'T EXISTS"));
             deleteRoles.add(role);
         }
         userRoles.removeAll(deleteRoles);
         user.setRoles(userRoles);
+        System.out.println("user Roles after delete: " + user.getAuthorities());
         userRepository.save(user);
 
         var jwtToken = jwtService.generateToken(user);
@@ -175,6 +173,7 @@ public class AuthenticationService {
     //---------------------------------------------------------------------------------//
 
     private void sendValidationEmail(AppUser user) throws MessagingException {
+
         var newToken = generateAndSaveActivationToken(user);
         emailService.emailSender(
                 user.getEmail(),
@@ -260,6 +259,7 @@ public class AuthenticationService {
     }
 
     public boolean validateToken(String token) {
+
         if (token == null ||!token.startsWith("Bearer ")) {
             return false;
         }

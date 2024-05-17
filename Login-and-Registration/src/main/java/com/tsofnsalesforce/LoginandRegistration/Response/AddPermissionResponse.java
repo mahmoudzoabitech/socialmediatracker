@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AddPermissionResponse {
 
+    @JsonProperty("token")
     private String token;
     @JsonProperty("access_token")
     private String accessToken;
