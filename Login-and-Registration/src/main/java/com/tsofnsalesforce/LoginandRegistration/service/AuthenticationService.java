@@ -91,7 +91,7 @@ public class AuthenticationService {
         revokeAllUserTokens(user);
         saveUserToken(user, jwtToken);
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+//                .token(jwtToken)
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
@@ -123,13 +123,11 @@ public class AuthenticationService {
 
 
         var user = userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new IllegalArgumentException("User Doesn't exists!!"));
-        List<Role>  addedRoles = new ArrayList<>();
-        var userRoles = user.getRoles(); 
+        Set<Role>  addedRoles = new HashSet<>();
+        var userRoles = user.getRoles();
         for(int i=0;i<request.getRoles().size();i++){
             var role = roleRepository.findByName(request.getRoles().get(i).getName()).orElseThrow(()-> new IllegalArgumentException("THE ROLE DOESN'T EXISTS"));
-            if(addedRoles.contains(role.getName()))
-                throw new MessagingException("THE USER ALREADY HAVE THE ROLE");
-            addedRoles.add(role);
+                addedRoles.add(role);
         }
         userRoles.addAll(addedRoles);
         user.setRoles(userRoles);
@@ -156,7 +154,7 @@ public class AuthenticationService {
             var role = roleRepository.findByName(request.getRoles().get(i).getName()).orElseThrow(()-> new IllegalArgumentException("THE ROLE DOESN'T EXISTS"));
             deleteRoles.add(role);
         }
-        userRoles.removeAll(deleteRoles);
+        deleteRoles.forEach(userRoles::remove);
         user.setRoles(userRoles);
         System.out.println("user Roles after delete: " + user.getAuthorities());
         userRepository.save(user);
@@ -286,9 +284,11 @@ public class AuthenticationService {
             if (userEmail != null) {
                 var user = this.userRepository.findByEmail(userEmail)
                         .orElseThrow();
-                for(int i=0;i<user.getRoles().size();i++){
-                    roles.add(user.getRoles().get(i).getName());
-                }
+                roles.addAll(Collections.singletonList(Arrays.toString(user.getRoles().toArray())));
+
+//                for(int i=0;i<user.getRoles().size();i++){
+//                    roles.add();
+//                }
                 return roles;
             }
         }

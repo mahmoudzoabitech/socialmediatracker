@@ -14,17 +14,18 @@ spring:
     database: mysql
     database-platform: org.hibernate.dialect.MySQL8Dialect
   mail:
-    host: localhost
-    port: 1025
-    username:
-    password:
+    host: stmp.gmail.com
+    port: 587
+    username: doniakhamishu@gmail.com
+    password: yxti-kadx-igvi-have
     properties:
       mail:
         smtp:
-          trust: "*"
-        auth: true
-        starttls:
-          enabled: true
+#          trust: "*"
+          auth: true
+          starttls:
+            enabled: true
+            required: true
         connectiontimeout: 5000
         timeout: 3000
         writetimeout: 5000
